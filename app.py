@@ -102,13 +102,27 @@ with st.sidebar:
     st.markdown(f"- 🟡 Health Threshold: **{HEALTH_THRESHOLD} µg/m³**\n"
                 f"- 🔴 Extreme Hazard: **{EXTREME_THRESHOLD} µg/m³**")
     st.markdown("---")
-    sample_n = st.slider("Plot sample size", 1000, 5000, 3000, step=500,
-                         help="Number of data points to render in scatter plots")
+    sample_n = st.slider("Plot sample size", 1000, 876_000, 10_000, step=1000,
+                         help="Number of data points to render in scatter plots (WARNING: Very large numbers may slow down rendering)")
 
 
 # ── Data Loading ──────────────────────────────────────────────────────────────
-@st.cache_data(show_spinner="Generating 876,000-row dataset… (first run only)")
+@st.cache_data(show_spinner="Loading dataset… (first run only)")
 def _load_data() -> pd.DataFrame:
+    real_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "real_air_quality_merged.csv")
+    real_parquet = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "real_air_quality_merged.parquet")
+    
+    # Priority 1: Real API data (CSV)
+    if os.path.exists(real_csv):
+        st.sidebar.success("✅ Connected to Real OpenAQ Data (CSV)!")
+        return pd.read_csv(real_csv)
+    # Priority 2: Real API data (Parquet)
+    elif os.path.exists(real_parquet):
+        st.sidebar.success("✅ Connected to Real OpenAQ Data (Parquet)!")
+        return pd.read_parquet(real_parquet)
+    
+    # Priority 3: Fallback to synthetic if fetch hasn't run yet
+    st.sidebar.warning("⚠️ Using synthetic test dataset. Run pipeline fetcher for real data.")
     return generate_city_data()
 
 df = _load_data()

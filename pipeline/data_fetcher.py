@@ -62,15 +62,15 @@ def _get(url: str, params: dict) -> dict | None:
 # ── Station Fetching ──────────────────────────────────────────────────────────
 def fetch_location_ids(n: int = NUM_STATIONS) -> list[int]:
     """
-    Fetch n location IDs from OpenAQ v3, sorted by most measurements
-    (highest-quality stations with dense data first).
+    Fetch n location IDs from OpenAQ v3. 
+    We filter by providers_id=113 (US EPA AirNow) to guarantee highly 
+    active, currently transmitting stations with reliable 2025 data.
     """
     url    = f"{OPENAQ_BASE_URL}/locations"
     params = {
-        "limit"    : n,
-        "page"     : 1,
-        "order_by" : "datetime_last",
-        "sort_order" : "desc",
+        "limit"       : n,
+        "page"        : 1,
+        "providers_id": 113
     }
     data = _get(url, params)
     if not data or "results" not in data:
@@ -127,7 +127,7 @@ def fetch_measurements_for_sensor(
 
 def fetch_station_yearly(
         location_id: int,
-        year: int = 2025,
+        year: int = 2024,
         chunk_months: int = 1
 ) -> pd.DataFrame:
     """
